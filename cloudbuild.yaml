@@ -52,6 +52,7 @@ steps:
         pwd
         terraform plan
       else
+        echo "doing nothing"
       fi 
 # [END tf-plan]
 
