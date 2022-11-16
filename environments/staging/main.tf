@@ -1,10 +1,3 @@
-
-module "baseline_modules" {
-  source      = "../../modules/env_baseline"
-
-  environment = "staging"
-  project_id  = "jlaude-labs-staging"
-}
 terraform {
   required_providers {
     google = {
