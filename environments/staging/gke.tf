@@ -12,13 +12,13 @@ module "gke" {
   version                              = "23.3.0"
   kubernetes_version                   = "1.24.5-gke.600"
   project_id                           = var.project_id
-  name                                 = "jlaude-labs-dev-gke-cluster"
+  name                                 = "jlaude-labs-staging-gke-cluster"
   region                               = "us-central1"
   zones                                = ["us-central1-a", "us-central1-b", "us-central1-f"]
   network                              = var.vpc
-  subnetwork                           = "dev-subnet-us-central1"
-  ip_range_services                    = "dev-subnet-secondary-range-services"
-  ip_range_pods                        = "dev-subnet-secondary-range-pods"
+  subnetwork                           = "staging-subnet-us-central1"
+  ip_range_services                    = "staging-subnet-secondary-range-services"
+  ip_range_pods                        = "staging-subnet-secondary-range-pods"
   http_load_balancing                  = false
   network_policy                       = false
   horizontal_pod_autoscaling           = true

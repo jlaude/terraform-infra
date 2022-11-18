@@ -41,3 +41,13 @@ variable "gcp_service_list" {
     "container.googleapis.com"
   ]
 }
+
+variable "cloud_deploy_cicd_sa_prefix" {
+  type = string
+}
+
+variable "cicd_project" {
+
+  type = string
+
+}

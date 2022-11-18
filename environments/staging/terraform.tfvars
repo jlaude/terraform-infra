@@ -3,41 +3,31 @@ environment = "staging"
 
 service_account = ""
 
-vpc = "jlaude-labs-vpc"
+vpc = "jlaude-labs-staging-vpc"
+
 
 subnets = [
   {
-    subnet_name   = "subnet-01"
-    subnet_ip     = "10.10.10.0/24"
-    subnet_region = "us-west1"
-  },
-  {
-    subnet_name           = "subnet-02"
-    subnet_ip             = "10.10.20.0/24"
-    subnet_region         = "us-west1"
-    subnet_private_access = "true"
-    subnet_flow_logs      = "true"
-    description           = "This subnet has a description"
-  },
-  {
-    subnet_name               = "subnet-03"
-    subnet_ip                 = "10.10.30.0/24"
-    subnet_region             = "us-west1"
-    subnet_flow_logs          = "true"
-    subnet_flow_logs_interval = "INTERVAL_10_MIN"
-    subnet_flow_logs_sampling = 0.7
-    subnet_flow_logs_metadata = "INCLUDE_ALL_METADATA"
+    subnet_name      = "staging-subnet-us-central1"
+    subnet_ip        = "10.10.0.0/16"
+    subnet_region    = "us-central1"
+    subnet_flow_logs = "true"
   }
 ]
 
 secondary_ranges = {
-  subnet-01 = [
+  staging-subnet-us-central1 = [
     {
-      range_name    = "subnet-01-secondary-01"
-      ip_cidr_range = "192.168.64.0/24"
+      range_name    = "staging-subnet-secondary-range-pods"
+      ip_cidr_range = "10.11.0.0/17"
     },
+    {
+      range_name    = "staging-subnet-secondary-range-services"
+      ip_cidr_range = "10.12.0.0/22"
+    }
   ]
-
-  subnet-02 = []
 }
 
+cloud_deploy_cicd_sa_prefix = "cloud-deploy-staging-sa"
+
+cicd_project = "dev-demo-project-366116"
