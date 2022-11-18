@@ -1,8 +1,6 @@
 project_id  = "jlaude-labs-dev"
 environment = "dev"
 
-service_account = ""
-
 vpc = "jlaude-labs-dev-vpc"
 
 

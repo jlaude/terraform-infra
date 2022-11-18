@@ -8,10 +8,10 @@ terraform {
 }
 
 provider "google" {
-  #impersonate_service_account = "var.service_account"
 
   project = var.project_id
   region  = "us-central1"
   zone    = "us-central1-c"
 }
+
 

@@ -1,6 +1,4 @@
-
-output "cloud_deloy_sa" {
-  description = "Service Account used by Cloud Deploy"
-  value       = google_service_account.cloud_deploy_sa.email
+output "gke_service_account" {
+  description = "Service Account used by GKE"
+  value       = module.gke.service_account
 }
-
