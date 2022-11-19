@@ -107,3 +107,20 @@ module "gke" {
 
   depends_on = [google_project_service.gcp_services, module.vpc]
 }
+
+#GKE Service Account Bindings
+
+data "google_service_account" "gke_sa" {
+  account_id = module.gke.service_account
+}
+
+resource "google_project_iam_binding" "gke_sa_artifact_registry_reader" {
+  project = var.cicd_project
+  role    = "roles/artifactregistry.reader"
+
+  members = [
+    data.google_service_account.gke_sa.member,
+  ]
+
+  depends_on = [module.gke.service_account]
+}
