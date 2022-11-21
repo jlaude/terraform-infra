@@ -137,21 +137,10 @@ module "gke" {
 }
 
 
-#GKE Service Account Bindings
+#GKE Service Account
 
 data "google_service_account" "gke_sa" {
   account_id = module.gke.service_account
-}
-
-resource "google_project_iam_binding" "gke_sa_artifact_registry_reader" {
-  project = var.cicd_project
-  role    = "roles/artifactregistry.reader"
-
-  members = [
-    data.google_service_account.gke_sa.member,
-  ]
-
-  depends_on = [module.gke.service_account]
 }
 
 #Create cloud deploy SA
@@ -196,7 +185,7 @@ module "project_iam_binding_environment_project" {
   depends_on = [google_service_account.cloud_deploy_sa]
 }
 
-#Grant permissions in CICD project on Cloud Deploy SA
+#Grant permissions in CICD project on Cloud Deploy SA and GKE SA
 module "project_iam_binding_cicd_project" {
 
   source  = "terraform-google-modules/iam/google//modules/projects_iam"
@@ -208,6 +197,9 @@ module "project_iam_binding_cicd_project" {
     "roles/clouddeploy.jobRunner" = [
     "serviceAccount:${var.cloud_deploy_cicd_sa_prefix}@${var.cicd_project}.iam.gserviceaccount.com",
     ]
+    "roles/artifactregistry.reader" = [
+    data.google_service_account.gke_sa.member,
+    ]
   }
-  depends_on = [google_service_account.cloud_deploy_sa]
+  depends_on = [google_service_account.cloud_deploy_sa, module.gke.service_account]
 }
