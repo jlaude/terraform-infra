@@ -24,6 +24,7 @@ locals {
   environment = data.terraform_remote_state.project.outputs.environment
   project_id  = data.terraform_remote_state.project.outputs.project_id
   vpc = data.terraform_remote_state.network.outputs.vpc
+  application = "java-web-app"
 }
 
 
@@ -55,7 +56,6 @@ module "gke" {
   enable_private_endpoint              = false
   enable_private_nodes                 = true
   monitoring_enable_managed_prometheus = true
-  identity_namespace                   = null
   cluster_autoscaling = {
     enabled             = false
     autoscaling_profile = "BALANCED"
@@ -86,16 +86,10 @@ module "gke" {
       create_service_account = true
       preemptible            = false
       initial_node_count     = 1
+      service_account        = "${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com"
+
     },
   ]
-
-  node_pools_oauth_scopes = {
-    all = [
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/devstorage.read_only"
-    ]
-  }
 
   node_pools_labels = {
     all = {}
@@ -134,21 +128,33 @@ module "gke" {
       "default-node-pool",
     ]
   }
+  depends_on = [google_service_account.gke_sa]
 
 }
 
 
-#GKE Service Account Bindings
-
-data "google_service_account" "gke_sa" {
-  account_id = module.gke.service_account
+#Create Workload identity Service Account and Binding
+module "kubernetes-engine_workload-identity" {
+  source  = "terraform-google-modules/kubernetes-engine/google//modules/workload-identity"
+  version = "9.2.0"
+  name      = local.application
+  namespace = "default"
+  project_id   = local.project_id
 }
+
 
 #Create cloud deploy SA
 resource "google_service_account" "cloud_deploy_sa" {
   account_id   = var.cloud_deploy_cicd_sa_prefix
   display_name = "Cloud Deploy ${local.environment} environment Service Account"
   project      = var.cicd_project
+}
+
+#Create GKE SA
+resource "google_service_account" "gke_sa" {
+  account_id   = "${local.project_id}-gke-sa"
+  display_name = "${local.environment} GKE Service Account"
+  project      = local.project_id
 }
 
 # Granting Cloud Build Service Account User permissions on Cloud Deploy SA
@@ -167,7 +173,7 @@ module "iam_service_accounts_iam" {
 
 }
 
-#Grant permissions in environment on Cloud Deploy SA
+#Grant permissions in environment on Cloud Deploy SA and GKE SA
 module "project_iam_binding_environment_project" {
 
   source  = "terraform-google-modules/iam/google//modules/projects_iam"
@@ -182,8 +188,29 @@ module "project_iam_binding_environment_project" {
     "roles/container.developer" = [
     "serviceAccount:${var.cloud_deploy_cicd_sa_prefix}@${var.cicd_project}.iam.gserviceaccount.com",
     ]
+    "roles/logging.logWriter" = [
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${local.application}@${local.project_id}.iam.gserviceaccount.com",
+    ]
+    "roles/monitoring.metricWriter" = [
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${local.application}@${local.project_id}.iam.gserviceaccount.com",
+    ]
+    "roles/monitoring.viewer" = [
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${local.application}@${local.project_id}.iam.gserviceaccount.com",    
+    ]
+    "roles/stackdriver.resourceMetadata.writer" = [
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${local.application}@${local.project_id}.iam.gserviceaccount.com",    
+    ]
+    "roles/secretmanager.secretAccessor" = [
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${local.application}@${local.project_id}.iam.gserviceaccount.com",    
+    ]
+
   }
-  depends_on = [google_service_account.cloud_deploy_sa]
+  depends_on = [google_service_account.cloud_deploy_sa, google_service_account.gke_sa, module.kubernetes-engine_workload-identity]
 }
 
 #Grant permissions in CICD project on Cloud Deploy SA and GKE SA
@@ -199,8 +226,9 @@ module "project_iam_binding_cicd_project" {
     "serviceAccount:${var.cloud_deploy_cicd_sa_prefix}@${var.cicd_project}.iam.gserviceaccount.com",
     ]
     "roles/artifactregistry.reader" = [
-    data.google_service_account.gke_sa.member,
+    "serviceAccount:${local.project_id}-gke-sa@${local.project_id}.iam.gserviceaccount.com",
     ]
   }
-  depends_on = [google_service_account.cloud_deploy_sa, module.gke.service_account]
+  depends_on = [google_service_account.cloud_deploy_sa, google_service_account.gke_sa]
 }
+
