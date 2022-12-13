@@ -56,6 +56,7 @@ module "gke" {
   enable_private_endpoint              = false
   enable_private_nodes                 = true
   monitoring_enable_managed_prometheus = true
+  monitoring_enabled_components	       = ["SYSTEM_COMPONENTS", "APISERVER", "CONTROLLER_MANAGER", "SCHEDULER"]
   cluster_autoscaling = {
     enabled             = false
     autoscaling_profile = "BALANCED"

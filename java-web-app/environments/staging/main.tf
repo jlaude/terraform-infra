@@ -56,6 +56,7 @@ module "gke" {
   filestore_csi_driver                 = false
   enable_private_endpoint              = false
   enable_private_nodes                 = true
+  monitoring_enabled_components        = ["SYSTEM_COMPONENTS", "APISERVER", "CONTROLLER_MANAGER", "SCHEDULER"]
   monitoring_enable_managed_prometheus = true
   cluster_autoscaling = {
     enabled             = false
